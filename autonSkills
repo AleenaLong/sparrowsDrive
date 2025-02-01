@@ -1,0 +1,171 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+flDrive = Motor(Ports.PORT1, GearSetting.RATIO_6_1, True)
+mlDrive = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
+blDrive = Motor(Ports.PORT3, GearSetting.RATIO_6_1, True)
+controller_1 = Controller(PRIMARY)
+frDrive = Motor(Ports.PORT6, GearSetting.RATIO_6_1, False)
+mrDrive = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
+brDrive = Motor(Ports.PORT8, GearSetting.RATIO_6_1, False)
+intake = Motor(Ports.PORT5, GearSetting.RATIO_6_1, True)
+clamp = DigitalOut(brain.three_wire_port.a)
+arm = Motor(Ports.PORT4, GearSetting.RATIO_6_1, True)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+
+# ------------------------------------------
+# 
+# 	Project:      VEXcode Project
+#	Author:       VEX
+#	Created:
+#	Description:  VEXcode V5 Python Project
+# 
+# ------------------------------------------
+
+# Library imports
+from vex import *
+
+# Begin project code
+flDrive.set_velocity(79.5, PERCENT)
+mlDrive.set_velocity(79.5, PERCENT)
+blDrive.set_velocity(79.5, PERCENT)
+frDrive.set_velocity(80, PERCENT)
+mrDrive.set_velocity(80, PERCENT)
+brDrive.set_velocity(80, PERCENT)
+
+intake.set_velocity(80, PERCENT)
+arm.set_velocity(80, PERCENT)
+arm.set_stopping(HOLD)
+
+def reverse():
+    flDrive.spin(REVERSE)
+    mlDrive.spin(REVERSE)
+    blDrive.spin(REVERSE)
+    frDrive.spin(REVERSE)
+    mrDrive.spin(REVERSE)
+    brDrive.spin(REVERSE)
+
+def forward():
+    flDrive.spin(FORWARD)
+    mlDrive.spin(FORWARD)
+    blDrive.spin(FORWARD)
+    frDrive.spin(FORWARD)
+    mrDrive.spin(FORWARD)
+    brDrive.spin(FORWARD)
+
+def turnLeft():
+    flDrive.spin(REVERSE)
+    mlDrive.spin(REVERSE)
+    blDrive.spin(REVERSE)
+    frDrive.spin(FORWARD)
+    mrDrive.spin(FORWARD)
+    brDrive.spin(FORWARD)
+
+def turnRight():
+    flDrive.spin(FORWARD)
+    mlDrive.spin(FORWARD)
+    blDrive.spin(FORWARD)
+    frDrive.spin(REVERSE)
+    mrDrive.spin(REVERSE)
+    brDrive.spin(REVERSE)
+
+def stopAll():
+    flDrive.stop()
+    mlDrive.stop()
+    blDrive.stop()
+    frDrive.stop()
+    mrDrive.stop()
+    brDrive.stop()
+
+# auton skills
+clamp.set(True)
+
+def pre_autonomous():
+    wait(2, SECONDS)
+
+def user_control():
+    print("not needed")
+
+def autonomous():
+    while frDrive.position(DEGREES) > -450:
+        reverse()
+        if arm.position(DEGREES) < 400:
+            arm.spin(FORWARD)
+        else:
+            arm.stop()
+    stopAll()
+    clamp.set(False)
+    wait(0.5, SECONDS)
+    intake.spin(FORWARD)
+
+    # turn left towards corner
+    goal = frDrive.position(DEGREES) + 650
+    while frDrive.position(DEGREES) < goal:
+        turnLeft()
+    stopAll()
+    wait(0.5, SECONDS)
+
+    # Push goal into corner
+    goal = frDrive.position(DEGREES) - 2000
+    while frDrive.position(DEGREES) > goal:
+        reverse()
+    stopAll()
+    clamp.set(True)
+    wait(0.5, SECONDS)
+    intake.stop()
+
+    """
+    # Drive to other goal
+    goal = frDrive.position(DEGREES) + 1400
+    while frDrive.position(DEGREES) < goal:
+        reverse()
+    stopAll()
+
+    # turn right to face goal
+    goal = frDrive.position(DEGREES) - 300
+    while frDrive.position(DEGREES) > goal:
+        turnRight()
+    stopAll()
+
+    # Push goal into corner
+    goal = frDrive.position(DEGREES) + 800
+    while frDrive.position(DEGREES) < goal:
+        forward()
+    stopAll()
+    """
+
+autonomous()
+comp = Competition(user_control, autonomous)
+pre_autonomous()
