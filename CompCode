@@ -1,0 +1,206 @@
+#region VEXcode Generated Robot Configuration
+from vex import *
+import urandom
+
+# Brain should be defined by default
+brain=Brain()
+
+# Robot configuration code
+controller_1 = Controller(PRIMARY)
+flDrive = Motor(Ports.PORT1, GearSetting.RATIO_6_1, True)
+mlDrive = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
+blDrive = Motor(Ports.PORT3, GearSetting.RATIO_6_1, True)
+frDrive = Motor(Ports.PORT6, GearSetting.RATIO_6_1, False)
+mrDrive = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
+brDrive = Motor(Ports.PORT8, GearSetting.RATIO_6_1, False)
+intake = Motor(Ports.PORT5, GearSetting.RATIO_6_1, True)
+clamp = DigitalOut(brain.three_wire_port.a)
+arm = Motor(Ports.PORT10, GearSetting.RATIO_6_1, True)
+
+
+# wait for rotation sensor to fully initialize
+wait(30, MSEC)
+
+
+# Make random actually random
+def initializeRandomSeed():
+    wait(100, MSEC)
+    random = brain.battery.voltage(MV) + brain.battery.current(CurrentUnits.AMP) * 100 + brain.timer.system_high_res()
+    urandom.seed(int(random))
+      
+# Set random seed 
+initializeRandomSeed()
+
+
+def play_vexcode_sound(sound_name):
+    # Helper to make playing sounds from the V5 in VEXcode easier and
+    # keeps the code cleaner by making it clear what is happening.
+    print("VEXPlaySound:" + sound_name)
+    wait(5, MSEC)
+
+# add a small delay to make sure we don't print in the middle of the REPL header
+wait(200, MSEC)
+# clear the console to make sure we don't have the REPL in the console
+print("\033[2J")
+
+#endregion VEXcode Generated Robot Configuration
+
+# ------------------------------------------
+# 
+# 	Project:
+#	Author:
+#	Created:
+#	Configuration:
+# 
+# ------------------------------------------
+
+# Library imports
+from vex import *
+
+# Begin project code
+# Begin project code
+flDrive.set_velocity(79.5, PERCENT)
+mlDrive.set_velocity(79.5, PERCENT)
+blDrive.set_velocity(79.5, PERCENT)
+frDrive.set_velocity(80, PERCENT)
+mrDrive.set_velocity(80, PERCENT)
+brDrive.set_velocity(80, PERCENT)
+
+intake.set_velocity(80, PERCENT)
+arm.set_velocity(80, PERCENT)
+arm.set_stopping(HOLD)
+
+def reverse():
+    flDrive.spin(REVERSE)
+    mlDrive.spin(REVERSE)
+    blDrive.spin(REVERSE)
+    frDrive.spin(REVERSE)
+    mrDrive.spin(REVERSE)
+    brDrive.spin(REVERSE)
+
+def forward():
+    flDrive.spin(FORWARD)
+    mlDrive.spin(FORWARD)
+    blDrive.spin(FORWARD)
+    frDrive.spin(FORWARD)
+    mrDrive.spin(FORWARD)
+    brDrive.spin(FORWARD)
+
+def turnLeft():
+    flDrive.spin(REVERSE)
+    mlDrive.spin(REVERSE)
+    blDrive.spin(REVERSE)
+    frDrive.spin(FORWARD)
+    mrDrive.spin(FORWARD)
+    brDrive.spin(FORWARD)
+
+def turnRight():
+    flDrive.spin(FORWARD)
+    mlDrive.spin(FORWARD)
+    blDrive.spin(FORWARD)
+    frDrive.spin(REVERSE)
+    mrDrive.spin(REVERSE)
+    brDrive.spin(REVERSE)
+
+def stopAll():
+    flDrive.stop()
+    mlDrive.stop()
+    blDrive.stop()
+    frDrive.stop()
+    mrDrive.stop()
+    brDrive.stop()
+
+def pre_autonomous():
+    # actions to do when the program starts
+    brain.screen.clear_screen()
+    brain.screen.print("pre auton code")
+    wait(1, SECONDS)
+
+def autonomous():
+    brain.screen.clear_screen()
+    brain.screen.print("autonomous code")
+    clamp.set(True)
+    while flDrive.position(DEGREES) > -800:
+        reverse()
+    stopAll()
+    wait(0.5, SECONDS)
+    clamp.set(False)
+    
+    # place automonous code here
+
+def nonLinear(speed):
+    if speed == 0:
+        return 0
+    squared = speed**2
+    final = squared/128
+    if speed < 0:
+        return -final
+    if speed > 0:
+        return final
+
+def user_control():
+    brain.screen.clear_screen()
+    # place driver control in this while loop
+    intake.set_velocity(80, PERCENT)
+    arm.set_velocity(80, PERCENT)
+    arm.set_stopping(HOLD)
+
+    clampState = True
+    press = False
+
+    while True:
+        fbSpeed = controller_1.axis3.position()
+        lrSpeed = controller_1.axis1.position()
+        if -5 < fbSpeed < 5:
+            fbSpeed = 0
+        if -5 < lrSpeed < 5:
+            lrSpeed = 0
+        # intake
+        if controller_1.buttonR1.pressing():
+            intake.spin(FORWARD)
+            print("spinning")
+        elif controller_1.buttonR2.pressing():
+            intake.spin(REVERSE)
+        else:
+            intake.stop()  
+        if controller_1.buttonA.pressing():
+            print("arming")
+            arm.spin(FORWARD)
+        elif controller_1.buttonB.pressing():
+            arm.spin(REVERSE)
+        else:
+            arm.stop()
+        """
+        if controller_1.buttonX.pressing():
+            if arm.position(TURNS) != :
+                arm.spin(FORWARD)
+        """
+        # clamp
+        if controller_1.buttonL1.pressing():
+            if not press:
+                press = True
+                if clampState:
+                    clampState = False
+                elif not clampState:
+                    clampState = True
+                clamp.set(clampState)
+        else:
+            press = False
+        print(clampState)
+        frDrive.set_velocity(nonLinear(fbSpeed - lrSpeed)*0.8, PERCENT)
+        mrDrive.set_velocity(nonLinear(fbSpeed - lrSpeed)*0.8, PERCENT)
+        brDrive.set_velocity(nonLinear(fbSpeed - lrSpeed)*0.8, PERCENT)
+        flDrive.set_velocity(nonLinear(fbSpeed + lrSpeed)*0.795, PERCENT)
+        mlDrive.set_velocity(nonLinear(fbSpeed + lrSpeed)*0.795, PERCENT)
+        blDrive.set_velocity(nonLinear(fbSpeed + lrSpeed)*0.795, PERCENT)
+        frDrive.spin(FORWARD)
+        mrDrive.spin(FORWARD)
+        brDrive.spin(FORWARD)
+        flDrive.spin(FORWARD)
+        mlDrive.spin(FORWARD)
+        blDrive.spin(FORWARD)
+        wait(20, MSEC)
+
+# create competition instance
+comp = Competition(user_control, autonomous)
+pre_autonomous()
